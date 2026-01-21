@@ -42,3 +42,7 @@ If you need manager access, the project owner can grant it via the deployed Clou
 
 - `setUserRole` (requires `ADMIN_TOKEN` secret)
 
+### Email delivery note
+
+SendGrid/Twilio can sometimes take a while to deliver emails (they may show as deferred initially), but they do eventually come through.
+

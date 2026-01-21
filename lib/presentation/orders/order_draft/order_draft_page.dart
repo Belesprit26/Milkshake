@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:milkshake/di/locator.dart';
-import 'package:milkshake/domain/auth/usecases/sign_out.dart';
-import 'package:milkshake/presentation/management/lookup_management/lookup_management_page.dart';
 import 'package:milkshake/presentation/orders/confirm_order/confirm_order_page.dart';
-import 'package:milkshake/presentation/orders/drafts/drafts_page.dart';
 import 'package:milkshake/presentation/orders/order_draft/widgets/drink_count.dart';
 import 'package:milkshake/presentation/orders/order_draft/widgets/milkshake_card.dart';
-import 'package:milkshake/presentation/orders/order_history/order_history_page.dart';
+import 'package:milkshake/presentation/orders/order_draft/widgets/order_draft_appbar.dart';
 import 'package:milkshake/presentation/shared/formatters/zar_format.dart';
 import 'package:milkshake/presentation/shared/widgets/app_form_container.dart';
 
@@ -34,48 +31,7 @@ class _OrderDraftView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Milky Shaky'),
-        actions: [
-          IconButton(
-            tooltip: 'Lookup management',
-            onPressed: () async {
-              final bloc = context.read<OrderDraftBloc>();
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LookupManagementPage()),
-              );
-              if (bloc.isClosed) return;
-              bloc.add(OrderDraftStarted(orderId: bloc.state.orderId));
-            },
-            icon: const Icon(Icons.admin_panel_settings),
-          ),
-          IconButton(
-            tooltip: 'Drafts',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const DraftsPage()),
-              );
-            },
-            icon: const Icon(Icons.edit_note),
-          ),
-          IconButton(
-            tooltip: 'Orders',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const OrderHistoryPage()),
-              );
-            },
-            icon: const Icon(Icons.receipt_long),
-          ),
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: () async {
-              await getIt<SignOut>()();
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+      appBar: const OrderDraftAppBar(),
       body: BlocBuilder<OrderDraftBloc, OrderDraftState>(
         builder: (context, state) {
           if (state.status == OrderDraftStatus.loading ||
@@ -148,6 +104,7 @@ class _OrderDraftView extends StatelessWidget {
     );
   }
 }
+
 
 
 
