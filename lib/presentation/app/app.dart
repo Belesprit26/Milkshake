@@ -67,6 +67,7 @@ class App extends StatelessWidget {
           labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
+      debugShowCheckedModeBanner: false,
       home: const HomePage(),
     );
   }
