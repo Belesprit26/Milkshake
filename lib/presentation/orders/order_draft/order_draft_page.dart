@@ -40,10 +40,13 @@ class _OrderDraftView extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Lookup management',
-            onPressed: () {
-              Navigator.of(context).push(
+            onPressed: () async {
+              final bloc = context.read<OrderDraftBloc>();
+              await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LookupManagementPage()),
               );
+              if (bloc.isClosed) return;
+              bloc.add(OrderDraftStarted(orderId: bloc.state.orderId));
             },
             icon: const Icon(Icons.admin_panel_settings),
           ),

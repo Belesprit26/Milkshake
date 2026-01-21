@@ -93,7 +93,13 @@ class ConfirmOrderPage extends StatelessWidget {
                               }
                             },
                       child: Text(
-                        state.status == ConfirmOrderStatus.submitting ? 'Working…' : 'Continue',
+                        state.status == ConfirmOrderStatus.submitting
+                            ? 'Working…'
+                            : order.status == OrderStatus.draft
+                                ? 'Confirm'
+                                : order.status == OrderStatus.pendingPayment
+                                    ? 'Proceed to pay'
+                                    : 'Continue',
                       ),
                     ),
 
