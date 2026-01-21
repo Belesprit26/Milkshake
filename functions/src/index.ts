@@ -1,0 +1,330 @@
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+import { defineSecret, defineString } from "firebase-functions/params";
+import { initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import Stripe from "stripe";
+
+initializeApp();
+
+export const health = onRequest((_req: any, res: any) => {
+  res.status(200).send("ok");
+});
+
+const seedToken = defineSecret("SEED_TOKEN");
+const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
+const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+// Optional override. On web we can usually infer this from the request Origin header.
+const webBaseUrl = defineString("WEB_BASE_URL");
+
+/**
+ * Idempotent Firestore seeder.
+ *
+ * - Seeds `config/current`
+ * - Seeds `lookups` documents (flavour/topping/consistency/store)
+ *
+ * Security:
+ * - Requires a token: `?token=...` that matches the Functions secret SEED_TOKEN.
+ *
+ * Usage (after deploying & setting secret):
+ *   curl "https://<region>-<project>.cloudfunctions.net/seedFirestore?token=YOUR_TOKEN"
+ */
+export const seedFirestore = onRequest(
+  // `invoker: "public"` ensures this endpoint can be called without Google IAM auth.
+  // (You still need the SEED_TOKEN query param.)
+  { secrets: [seedToken], invoker: "public" as any },
+  async (req: any, res: any) => {
+  try {
+    const _req = req as any;
+    const _res = res as any;
+    const provided = (_req.query.token ?? "").toString();
+    if (!provided || provided !== seedToken.value()) {
+      _res.status(401).send("Unauthorized");
+      return;
+    }
+
+    const db = getFirestore();
+
+    // 1) Config
+    const configRef = db.collection("config").doc("current");
+    await configRef.set(
+      {
+        vatPercent: 15,
+        maxDrinks: 10,
+        baseDrinkPriceCents: 2500,
+        version: "v1",
+        discount: {
+          maxDiscountCents: 5000,
+          tiers: [
+            { minPaidOrders: 3, minDrinksPerOrder: 2, percentOff: 5 },
+            { minPaidOrders: 5, minDrinksPerOrder: 3, percentOff: 10 },
+            { minPaidOrders: 10, minDrinksPerOrder: 3, percentOff: 15 },
+          ],
+        },
+        seededAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    // 2) Lookups
+    // We use deterministic doc IDs so re-running this updates in-place.
+    const lookups = [
+      // Flavours
+      { id: "flavour_vanilla", type: "flavour", name: "Vanilla", priceDeltaCents: 100, active: true },
+      { id: "flavour_strawberry", type: "flavour", name: "Strawberry", priceDeltaCents: 100, active: true },
+      { id: "flavour_chocolate", type: "flavour", name: "Chocolate", priceDeltaCents: 150, active: true },
+      { id: "flavour_coffee", type: "flavour", name: "Coffee", priceDeltaCents: 150, active: true },
+      { id: "flavour_banana", type: "flavour", name: "Banana", priceDeltaCents: 100, active: true },
+      { id: "flavour_oreo", type: "flavour", name: "Oreo", priceDeltaCents: 200, active: true },
+      { id: "flavour_bar_one", type: "flavour", name: "Bar one", priceDeltaCents: 250, active: true },
+
+      // Toppings
+      {
+        id: "topping_frozen_strawberries",
+        type: "topping",
+        name: "Frozen Strawberries",
+        priceDeltaCents: 200,
+        active: true,
+      },
+      {
+        id: "topping_freeze_dried_banana",
+        type: "topping",
+        name: "Freeze-dried banana",
+        priceDeltaCents: 200,
+        active: true,
+      },
+      { id: "topping_oreo_crumbs", type: "topping", name: "Oreo crumbs", priceDeltaCents: 250, active: true },
+      { id: "topping_bar_one_syrup", type: "topping", name: "Bar one syrup", priceDeltaCents: 300, active: true },
+      {
+        id: "topping_coffee_powder_choc",
+        type: "topping",
+        name: "Coffee powder with choc",
+        priceDeltaCents: 250,
+        active: true,
+      },
+      {
+        id: "topping_choc_vermicelli",
+        type: "topping",
+        name: "Chocolate vermicelli",
+        priceDeltaCents: 150,
+        active: true,
+      },
+
+      // Consistency
+      {
+        id: "consistency_double_thick",
+        type: "consistency",
+        name: "Double thick",
+        priceDeltaCents: 300,
+        active: true,
+      },
+      { id: "consistency_thick", type: "consistency", name: "Thick", priceDeltaCents: 150, active: true },
+      { id: "consistency_milky", type: "consistency", name: "Milky", priceDeltaCents: 0, active: true },
+      { id: "consistency_icy", type: "consistency", name: "Icy", priceDeltaCents: -100, active: true },
+
+      // Stores
+      { id: "store_southdowns", type: "store", name: "Southdowns (Irene)", priceDeltaCents: 0, active: true },
+      { id: "store_menlyn", type: "store", name: "Menlyn Maine", priceDeltaCents: 0, active: true },
+    ] as const;
+
+    const batch = db.batch();
+    for (const finalLookup of lookups) {
+      const ref = db.collection("lookups").doc(finalLookup.id);
+      batch.set(
+        ref,
+        {
+          type: finalLookup.type,
+          name: finalLookup.name,
+          priceDeltaCents: finalLookup.priceDeltaCents,
+          active: finalLookup.active,
+          seededAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+    await batch.commit();
+
+    _res.status(200).json({
+      ok: true,
+      seeded: {
+        config: "config/current",
+        lookups: lookups.length,
+      },
+    });
+  } catch (e) {
+    (res as any).status(500).send(`Seed failed: ${String(e)}`);
+  }
+},
+);
+
+/**
+ * Creates a Stripe Checkout Session for a confirmed order.
+ *
+ * Client flow:
+ * - User confirms order -> status becomes `pending_payment`
+ * - Client calls this callable function to get checkoutUrl
+ * - Redirect user to Stripe Checkout
+ *
+ * This function is the source of truth for:
+ * - the payable amount (taken from order.totals.totalCents snapshot)
+ * - access control (order must belong to caller)
+ */
+export const createCheckoutSession = onCall(
+  { secrets: [stripeSecretKey] },
+  async (request: any) => {
+    const auth = request.auth;
+    if (!auth?.uid) {
+      throw new HttpsError("unauthenticated", "You must be signed in.");
+    }
+    const orderId = (request.data?.orderId ?? "").toString();
+    if (!orderId) {
+      throw new HttpsError("invalid-argument", "Missing orderId.");
+    }
+
+    const db = getFirestore();
+    const ref = db.collection("orders").doc(orderId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Order not found.");
+    }
+    const data = snap.data() as any;
+    if (!data || data.uid !== auth.uid) {
+      throw new HttpsError("permission-denied", "Order does not belong to you.");
+    }
+    if (data.status !== "pending_payment") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Order must be pending_payment before checkout can start.",
+      );
+    }
+
+    const totals = data.totals ?? {};
+    const totalCents = Number(totals.totalCents ?? 0);
+    if (!Number.isFinite(totalCents) || totalCents <= 0) {
+      throw new HttpsError("failed-precondition", "Order total is invalid.");
+    }
+
+    const stripe = new Stripe(stripeSecretKey.value(), {
+      apiVersion: "2024-06-20",
+    });
+
+    const base = _inferWebBaseUrl(request) || (webBaseUrl.value() as any);
+    if (!base || typeof base !== "string") {
+      throw new HttpsError(
+        "failed-precondition",
+        "WEB_BASE_URL is not set and request origin could not be inferred.",
+      );
+    }
+
+    const successUrl = `${base}/?payment=success&orderId=${encodeURIComponent(orderId)}`;
+    const cancelUrl = `${base}/?payment=cancel&orderId=${encodeURIComponent(orderId)}`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: data?.email ?? undefined,
+      metadata: {
+        orderId,
+        uid: auth.uid,
+      },
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "zar",
+            unit_amount: Math.round(totalCents),
+            product_data: {
+              name: "Milkshake order",
+            },
+          },
+        },
+      ],
+    });
+
+    await ref.set(
+      {
+        payment: {
+          provider: "stripe",
+          checkoutSessionId: session.id,
+          status: "created",
+          createdAt: FieldValue.serverTimestamp(),
+        },
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return { checkoutUrl: session.url };
+  },
+);
+
+function _inferWebBaseUrl(request: any): string | null {
+  const origin = request?.rawRequest?.headers?.origin;
+  if (typeof origin === "string" && origin.startsWith("http")) return origin;
+
+  const referer = request?.rawRequest?.headers?.referer;
+  if (typeof referer === "string" && referer.startsWith("http")) {
+    try {
+      const u = new URL(referer);
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Stripe webhook to finalize payment.
+ *
+ * - Validates signature
+ * - On `checkout.session.completed`, marks the order `paid`
+ */
+export const stripeWebhook = onRequest(
+  { secrets: [stripeSecretKey, stripeWebhookSecret], invoker: "public" as any },
+  async (req: any, res: any) => {
+    try {
+      const stripe = new Stripe(stripeSecretKey.value(), { apiVersion: "2024-06-20" });
+      const sig = req.headers["stripe-signature"];
+      if (!sig) {
+        res.status(400).send("Missing signature");
+        return;
+      }
+
+      const event = stripe.webhooks.constructEvent(
+        req.rawBody,
+        sig,
+        stripeWebhookSecret.value(),
+      );
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as any;
+        const orderId = session?.metadata?.orderId;
+        if (orderId) {
+          const db = getFirestore();
+          const ref = db.collection("orders").doc(orderId);
+          await ref.set(
+            {
+              status: "paid",
+              payment: {
+                provider: "stripe",
+                checkoutSessionId: session.id,
+                paymentIntentId: session.payment_intent ?? null,
+                status: "paid",
+                paidAt: FieldValue.serverTimestamp(),
+              },
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
+        }
+      }
+
+      res.json({ received: true });
+    } catch (e) {
+      res.status(400).send(`Webhook Error: ${String(e)}`);
+    }
+  },
+);
+
+

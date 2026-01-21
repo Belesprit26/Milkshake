@@ -1,0 +1,54 @@
+{
+  "firestore": {
+    "rules": "firebase.rules",
+    "indexes": "firebase.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
+      "ignore": [
+        ".git",
+        "node_modules",
+        "dist",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "remoteconfig": {
+    "template": "remoteconfig.template.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "gsthethird-1f244",
+          "appId": "1:557963377518:android:5a34444496fcf058541f7f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "gsthethird-1f244",
+          "appId": "1:557963377518:ios:481b1f1c303ffc50541f7f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "gsthethird-1f244",
+          "configurations": {
+            "android": "1:557963377518:android:5a34444496fcf058541f7f",
+            "ios": "1:557963377518:ios:481b1f1c303ffc50541f7f",
+            "web": "1:557963377518:web:5dee3cb34393c4d8541f7f",
+            "windows": "1:557963377518:web:ba2dd1ba03828807541f7f"
+          }
+        }
+      }
+    }
+  }
+}

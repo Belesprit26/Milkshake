@@ -1,0 +1,29 @@
+// These shims exist to keep the editor/tsserver happy in environments where
+// module resolution doesn't pick up `functions/node_modules` correctly.
+
+declare module "firebase-functions/v2/https" {
+  export const onRequest: any;
+  export const onCall: any;
+  export const HttpsError: any;
+}
+
+declare module "firebase-functions/params" {
+  export const defineSecret: any;
+  export const defineString: any;
+}
+
+declare module "firebase-admin/app" {
+  export const initializeApp: any;
+}
+
+declare module "firebase-admin/firestore" {
+  export const FieldValue: any;
+  export const getFirestore: any;
+}
+
+declare module "stripe" {
+  const Stripe: any;
+  export default Stripe;
+}
+
+

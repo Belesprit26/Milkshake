@@ -1,0 +1,9 @@
+node_modules/
+lib/
+dist/
+venv/
+.runtimeconfig.json
+.env
+.env.*
+
+*.local
