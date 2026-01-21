@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-
-import '../../shared/widgets/app_form_container.dart';
-import '../login/login_page.dart';
-import '../sign_up/sign_up_page.dart';
+import 'package:milkshake/presentation/auth/login/widgets/login_form.dart';
+import 'package:milkshake/presentation/auth/sign_up/widgets/sign_up_form.dart';
+import 'package:milkshake/presentation/shared/widgets/app_form_container.dart';
 
 enum _AuthMode { login, signup }
 

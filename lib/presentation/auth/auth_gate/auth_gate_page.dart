@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../di/locator.dart';
-import '../../orders/order_draft/order_draft_page.dart';
-import 'auth_card.dart';
+import 'package:milkshake/di/locator.dart';
+import 'package:milkshake/presentation/orders/order_draft/order_draft_page.dart';
+import 'widgets/auth_card.dart';
 import 'auth_gate_cubit.dart';
 
 class AuthGatePage extends StatelessWidget {
@@ -42,5 +41,3 @@ class _AuthLanding extends StatelessWidget {
     );
   }
 }
-
-
