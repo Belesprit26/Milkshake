@@ -10,6 +10,7 @@ import '../../shared/widgets/app_dropdown_field.dart';
 import '../../shared/widgets/app_text_field.dart';
 import '../../shared/formatters/zar_format.dart';
 import '../drafts/drafts_page.dart';
+import '../../management/lookup_management/lookup_management_page.dart';
 import '../order_history/order_history_page.dart';
 import '../confirm_order/confirm_order_page.dart';
 import 'order_draft_bloc.dart';
@@ -37,6 +38,15 @@ class _OrderDraftView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Milky Shaky'),
         actions: [
+          IconButton(
+            tooltip: 'Lookup management',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LookupManagementPage()),
+              );
+            },
+            icon: const Icon(Icons.admin_panel_settings),
+          ),
           IconButton(
             tooltip: 'Drafts',
             onPressed: () {

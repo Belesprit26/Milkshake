@@ -12,6 +12,7 @@ export const health = onRequest((_req: any, res: any) => {
 });
 
 const seedToken = defineSecret("SEED_TOKEN");
+const adminToken = defineSecret("ADMIN_TOKEN");
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 const webBaseUrl = defineString("WEB_BASE_URL");
@@ -133,6 +134,45 @@ export const seedFirestore = onRequest(
     (res as any).status(500).send(`Seed failed: ${String(e)}`);
   }
 },
+);
+
+export const setUserRole = onRequest(
+  { secrets: [adminToken], invoker: "public" as any },
+  async (req: any, res: any) => {
+    try {
+      const provided = (req.query.token ?? "").toString();
+      if (!provided || provided !== adminToken.value()) {
+        res.status(401).send("Unauthorized");
+        return;
+      }
+
+      const uid = (req.query.uid ?? "").toString();
+      const email = (req.query.email ?? "").toString();
+      const role = (req.query.role ?? "").toString();
+
+      let targetUid = uid;
+      if (!targetUid && email) {
+        const u = await getAuth().getUserByEmail(email);
+        targetUid = u.uid;
+      }
+
+      if (!targetUid) {
+        res.status(400).send("Missing uid or email");
+        return;
+      }
+
+      if (!role) {
+        await getAuth().setCustomUserClaims(targetUid, {});
+        res.status(200).json({ ok: true, uid: targetUid, role: null });
+        return;
+      }
+
+      await getAuth().setCustomUserClaims(targetUid, { role });
+      res.status(200).json({ ok: true, uid: targetUid, role });
+    } catch (e) {
+      res.status(500).send(`Failed: ${String(e)}`);
+    }
+  },
 );
 
 export const createCheckoutSession = onCall(

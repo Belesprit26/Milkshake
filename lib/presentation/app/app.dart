@@ -42,7 +42,8 @@ class App extends StatelessWidget {
             backgroundColor: const Color(0xFF1677FF),
             foregroundColor: Colors.white,
             textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            minimumSize: const Size(0, 44),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
@@ -52,7 +53,8 @@ class App extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF1677FF),
             textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            minimumSize: const Size(0, 44),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(12)),
             ),

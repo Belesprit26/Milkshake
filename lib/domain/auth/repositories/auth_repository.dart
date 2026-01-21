@@ -5,6 +5,8 @@ abstract class AuthRepository {
   Stream<AuthUser?> authStateChanges();
   AuthUser? currentUser();
 
+  Future<Result<String?>> getRole();
+
   Future<Result<AuthUser>> signInWithEmailPassword({
     required String email,
     required String password,

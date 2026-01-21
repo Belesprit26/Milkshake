@@ -47,6 +47,67 @@ class FirestoreConfigRepository implements ConfigRepository {
     }
   }
 
+  @override
+  Future<Result<int>> getCurrentConfigUpdatedAtMillis() async {
+    try {
+      final snap = await _firestore.collection('config').doc('current').get();
+      final data = snap.data();
+      if (data == null) return const Ok(0);
+      final ts = data['updatedAt'] ?? data['seededAt'];
+      if (ts is Timestamp) return Ok(ts.millisecondsSinceEpoch);
+      return const Ok(0);
+    } catch (e) {
+      return Err(UnexpectedFailure('Failed to load config timestamp: $e'));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateCurrentConfig({
+    int? vatPercent,
+    int? maxDrinks,
+    int? baseDrinkPriceCents,
+    required String actorUid,
+  }) async {
+    try {
+      final ref = _firestore.collection('config').doc('current');
+      final now = FieldValue.serverTimestamp();
+
+      await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        final before = snap.data() ?? <String, Object?>{};
+
+        final patch = <String, Object?>{};
+        if (vatPercent != null) patch['vatPercent'] = vatPercent;
+        if (maxDrinks != null) patch['maxDrinks'] = maxDrinks;
+        if (baseDrinkPriceCents != null) patch['baseDrinkPriceCents'] = baseDrinkPriceCents;
+        patch['updatedAt'] = now;
+
+        tx.set(ref, patch, SetOptions(merge: true));
+
+        final after = <String, Object?>{
+          if (vatPercent != null) 'vatPercent': vatPercent,
+          if (maxDrinks != null) 'maxDrinks': maxDrinks,
+          if (baseDrinkPriceCents != null) 'baseDrinkPriceCents': baseDrinkPriceCents,
+        };
+
+        final auditRef = _firestore.collection('audit_events').doc();
+        tx.set(auditRef, {
+          'entityType': 'config',
+          'entityId': 'current',
+          'action': 'update',
+          'actorUid': actorUid,
+          'at': now,
+          'before': before,
+          'after': after,
+        });
+      });
+
+      return const Ok(null);
+    } catch (e) {
+      return Err(UnexpectedFailure('Failed to update config: $e'));
+    }
+  }
+
   FrequentCustomerDiscountPolicy _parseDiscountPolicy(Object? raw) {
     if (raw is! Map) {
       return const FrequentCustomerDiscountPolicy(

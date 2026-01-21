@@ -19,6 +19,20 @@ class FirebaseAuthRepository implements AuthRepository {
   AuthUser? currentUser() => _mapUser(_auth.currentUser);
 
   @override
+  Future<Result<String?>> getRole() async {
+    try {
+      final u = _auth.currentUser;
+      if (u == null) return const Ok(null);
+      final token = await u.getIdTokenResult(true);
+      final claims = token.claims;
+      final role = claims == null ? null : claims['role']?.toString();
+      return Ok(role);
+    } catch (e) {
+      return Err(UnexpectedFailure('Failed to read role: $e'));
+    }
+  }
+
+  @override
   Future<Result<AuthUser>> signInWithEmailPassword({
     required String email,
     required String password,
