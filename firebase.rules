@@ -40,6 +40,10 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /mail/{mailId} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

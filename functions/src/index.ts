@@ -1,6 +1,7 @@
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import Stripe from "stripe";
 
@@ -184,11 +185,14 @@ export const createCheckoutSession = onCall(
     const successUrl = `${base}/?payment=success&orderId=${encodeURIComponent(orderId)}`;
     const cancelUrl = `${base}/?payment=cancel&orderId=${encodeURIComponent(orderId)}`;
 
+    const authUser = await getAuth().getUser(auth.uid);
+    const email = authUser.email ?? data?.email ?? undefined;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      customer_email: data?.email ?? undefined,
+      customer_email: email,
       metadata: {
         orderId,
         uid: auth.uid,
@@ -209,6 +213,7 @@ export const createCheckoutSession = onCall(
 
     await ref.set(
       {
+        email: email ?? null,
         payment: {
           provider: "stripe",
           checkoutSessionId: session.id,
@@ -260,12 +265,15 @@ export const stripeWebhook = onRequest(
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as any;
         const orderId = session?.metadata?.orderId;
+        const customerEmail =
+          session?.customer_details?.email ?? session?.customer_email ?? null;
         if (orderId) {
           const db = getFirestore();
           const ref = db.collection("orders").doc(orderId);
           await ref.set(
             {
               status: "paid",
+              email: customerEmail,
               payment: {
                 provider: "stripe",
                 checkoutSessionId: session.id,
@@ -277,6 +285,22 @@ export const stripeWebhook = onRequest(
             },
             { merge: true },
           );
+
+          if (customerEmail) {
+            const subject = `Milky Shaky - Payment received (${orderId})`;
+            const text = `Your payment was successful.\n\nOrder: ${orderId}\nStatus: paid\n\nThank you for your order.`;
+            const html = `<p>Your payment was successful.</p><p><strong>Order:</strong> ${orderId}<br/><strong>Status:</strong> paid</p><p>Thank you for your order.</p>`;
+            await db.collection("mail").add({
+              to: [customerEmail],
+              message: {
+                subject,
+                text,
+                html,
+              },
+              createdAt: FieldValue.serverTimestamp(),
+              orderId,
+            });
+          }
         }
       }
 

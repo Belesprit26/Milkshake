@@ -13,6 +13,10 @@ declare module "firebase-admin/app" {
   export const initializeApp: any;
 }
 
+declare module "firebase-admin/auth" {
+  export const getAuth: any;
+}
+
 declare module "firebase-admin/firestore" {
   export const FieldValue: any;
   export const getFirestore: any;
