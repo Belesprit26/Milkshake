@@ -36,8 +36,6 @@ class SignUpForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<SignUpBloc>(),
-      // IMPORTANT: Use a descendant BuildContext (via Builder) so all `context.read`
-      // calls can see the BlocProvider above.
       child: Builder(
         builder: (context) {
           return BlocListener<SignUpBloc, SignUpState>(

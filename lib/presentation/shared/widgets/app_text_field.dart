@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Reusable text form field used across the app.
-///
-/// Styling is intentionally centralized via `ThemeData.inputDecorationTheme`
-/// (see `lib/presentation/app/app.dart`) so forms stay consistent.
 class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,

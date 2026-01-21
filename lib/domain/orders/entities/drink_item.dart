@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import '../../catalog/entities/lookup_item_snapshot.dart';
 
-/// Represents one "DRINK DETAIL" container.
 class DrinkItem extends Equatable {
   const DrinkItem({
     required this.flavour,

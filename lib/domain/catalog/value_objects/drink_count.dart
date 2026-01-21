@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Value object representing a drink count.
 class DrinkCount extends Equatable {
   const DrinkCount(this.value) : assert(value >= 1);
 

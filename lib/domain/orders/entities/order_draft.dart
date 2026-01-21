@@ -22,18 +22,14 @@ class OrderDraft extends Equatable {
   final String uid;
   final OrderStatus status;
 
-  /// Captured pricing snapshot used to compute totals.
   final ConfigSnapshot configSnapshot;
 
-  /// One "DRINK DETAIL" container per drink.
   final List<DrinkItem> items;
 
   final OrderTotals totals;
 
-  /// Store selection snapshot (type=store).
   final LookupItemSnapshot pickupStore;
 
-  /// ISO-like "HH:mm" for now; we can evolve this later (DateTime + timezone).
   final String pickupTime;
 
   OrderDraft copyWith({

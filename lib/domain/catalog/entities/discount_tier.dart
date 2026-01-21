@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Discount tier rule used for frequent customer discounts.
 class DiscountTier extends Equatable {
   const DiscountTier({
     required this.minPaidOrders,

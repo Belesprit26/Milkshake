@@ -1,8 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Minimal view of a patron's order history needed for discount eligibility.
-///
-/// Keep this "domain-shaped" so we can compute it from Firestore later.
 class OrderHistorySummary extends Equatable {
   const OrderHistorySummary({
     required this.paidOrdersCount,
@@ -11,7 +8,6 @@ class OrderHistorySummary extends Equatable {
 
   final int paidOrdersCount;
 
-  /// Map: drinks threshold -> number of paid orders with >= that drink count.
   final Map<int, int> paidOrdersWithAtLeastDrinks;
 
   int ordersWithAtLeastDrinks(int minDrinks) =>

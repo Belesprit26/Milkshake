@@ -56,13 +56,11 @@ class DraftsPage extends StatelessWidget {
                         subtitle: Text('Drinks: ${o.drinkCount} • Draft'),
                         trailing: Text(formatZar(o.total)),
                         onTap: () {
-                          // Edit draft in Order Placement.
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => OrderDraftPage(orderId: o.id)),
                           );
                         },
                         onLongPress: () {
-                          // Quick path: review/confirm from draft.
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => ConfirmOrderPage(orderId: o.id)),
                           );

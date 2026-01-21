@@ -7,14 +7,6 @@ import '../../../domain/catalog/entities/lookup_item_snapshot.dart';
 import '../../../domain/catalog/entities/lookup_type.dart';
 import '../../../domain/catalog/repositories/catalog_repository.dart';
 
-/// Firestore-backed catalog/lookup repository.
-///
-/// Suggested collection: `lookups`
-/// Fields per doc:
-/// - type: "flavour" | "topping" | "consistency" | "store"
-/// - name: string
-/// - priceDeltaCents: number
-/// - active: bool
 class FirestoreCatalogRepository implements CatalogRepository {
   FirestoreCatalogRepository({required FirebaseFirestore firestore})
       : _firestore = firestore;

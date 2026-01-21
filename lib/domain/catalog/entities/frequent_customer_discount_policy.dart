@@ -13,7 +13,6 @@ class FrequentCustomerDiscountPolicy extends Equatable {
   final List<DiscountTier> tiers;
   final Money maxDiscountAmount;
 
-  /// Returns the best eligible percentOff, else 0.
   int eligiblePercent(OrderHistorySummary summary) {
     var best = 0;
     for (final tier in tiers) {

@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Immutable money value stored in minor units (cents).
-///
-/// - Avoids floating point issues.
-/// - Currency formatting is intentionally out of scope for domain logic.
 class Money extends Equatable implements Comparable<Money> {
   const Money(this.cents);
 

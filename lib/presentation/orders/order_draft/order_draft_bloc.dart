@@ -78,7 +78,6 @@ class OrderDraftBloc extends Bloc<OrderDraftEvent, OrderDraftState> {
     final consistencies = (consistencyRes as Ok<List<LookupItemSnapshot>>).value;
     final stores = (storeRes as Ok<List<LookupItemSnapshot>>).value;
 
-    // If editing an existing draft, load it and prefill state.
     if (event.orderId != null && event.orderId!.trim().isNotEmpty) {
       final user = _authRepository.currentUser();
       if (user == null) {
@@ -97,8 +96,6 @@ class OrderDraftBloc extends Bloc<OrderDraftEvent, OrderDraftState> {
         return;
       }
 
-      // Ensure the currently active lookup lists include any selected snapshot values
-      // so dropdowns can render even if items were deactivated later.
       List<LookupItemSnapshot> ensureIncluded(
         List<LookupItemSnapshot> list,
         LookupItemSnapshot selected,
@@ -123,7 +120,6 @@ class OrderDraftBloc extends Bloc<OrderDraftEvent, OrderDraftState> {
       emit(
         state.copyWith(
           status: OrderDraftStatus.ready,
-          // For existing drafts, prefer the stored pricing snapshot to avoid drifting totals.
           config: order.configSnapshot,
           flavours: mergedFlavours,
           toppings: mergedToppings,

@@ -1,15 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Reusable form container used across the app (login, order, confirm, etc).
-///
-/// This intentionally handles:
-/// - consistent rounded corners + padding
-/// - optional title/description
-/// - actions footer (e.g. Submit/Cancel buttons)
-/// - scroll friendliness (wrap it in SingleChildScrollView in pages)
-///
-/// Field styling is controlled separately via Theme (`InputDecorationTheme`)
-/// and button theming (`FilledButtonThemeData`, etc.).
 class AppFormContainer extends StatelessWidget {
   const AppFormContainer({
     super.key,

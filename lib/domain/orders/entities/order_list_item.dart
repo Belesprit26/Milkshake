@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../../../core/money/money.dart';
 import 'order_status.dart';
 
-/// Lightweight order list model for history screens.
 class OrderListItem extends Equatable {
   const OrderListItem({
     required this.id,

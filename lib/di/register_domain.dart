@@ -13,7 +13,6 @@ import '../domain/users/repositories/user_profile_repository.dart';
 import '../domain/users/usecases/upsert_user_profile.dart';
 
 void registerDomain(GetIt getIt) {
-  // Register domain-level use cases here (pure Dart; depends on repository interfaces).
   getIt.registerLazySingleton<CalculateOrderTotals>(() => const CalculateOrderTotals());
 
   getIt.registerLazySingleton<GetCurrentConfig>(

@@ -17,7 +17,6 @@ import 'order_draft_bloc.dart';
 class OrderDraftPage extends StatelessWidget {
   const OrderDraftPage({super.key, this.orderId});
 
-  /// When provided, the page loads an existing draft for editing.
   final String? orderId;
 
   @override
@@ -36,7 +35,7 @@ class _OrderDraftView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Order Placement'),
+        title: const Text('Milky Shaky'),
         actions: [
           IconButton(
             tooltip: 'Drafts',
@@ -79,7 +78,6 @@ class _OrderDraftView extends StatelessWidget {
           final totalLabel = totals == null ? '-' : formatZar(totals.total);
 
           return AppFormContainer(
-            // Purely presentational: keep behavior the same, just provide the shared “form shell”.
             title: 'Order Placement',
             subtitle: 'All fields compulsory.',
             padding: EdgeInsets.zero,
@@ -91,7 +89,7 @@ class _OrderDraftView extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 for (var i = 0; i < state.drinks.length; i++) ...[
-                  _MilkshakeCard(index: i),
+                  _MilkshakeCard(key: ValueKey('milkshake_$i'), index: i),
                   const SizedBox(height: 16),
                 ],
 
@@ -158,7 +156,6 @@ class _DrinkCountInputState extends State<_DrinkCountInput> {
     _focusNode = FocusNode();
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
-        // If user leaves the field in an invalid state, reset to bloc value.
         setState(() => _error = null);
       }
     });
@@ -214,26 +211,36 @@ class _DrinkCountInputState extends State<_DrinkCountInput> {
   }
 }
 
-class _MilkshakeCard extends StatelessWidget {
-  const _MilkshakeCard({required this.index});
+class _MilkshakeCard extends StatefulWidget {
+  const _MilkshakeCard({super.key, required this.index});
   final int index;
+
+  @override
+  State<_MilkshakeCard> createState() => _MilkshakeCardState();
+}
+
+class _MilkshakeCardState extends State<_MilkshakeCard> {
+  bool _locked = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<OrderDraftBloc, OrderDraftState>(
       buildWhen: (prev, next) => prev.drinks != next.drinks || prev.status != next.status,
       builder: (context, state) {
+        final index = widget.index;
         final drink = state.drinks[index];
         final base = state.config?.baseDrinkPrice;
         final perDrink = base == null
             ? null
             : base + drink.flavour.priceDelta + drink.topping.priceDelta + drink.consistency.priceDelta;
 
+        final borderRadius = BorderRadius.circular(16);
+
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: borderRadius,
             border: Border.all(color: const Color(0xFFE4E7EC)),
           ),
           child: Column(
@@ -242,60 +249,91 @@ class _MilkshakeCard extends StatelessWidget {
               Text('Milkshake ${index + 1}', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
 
-              AppDropdownField<LookupItemSnapshot>(
-                label: 'Flavour',
-                value: drink.flavour,
-                items: state.flavours,
-                itemLabel: (x) => x.name,
-                onChanged: (v) {
-                  if (v == null) return;
-                  context.read<OrderDraftBloc>().add(
-                        OrderDraftDrinkSelectionChanged(index: index, flavour: v),
-                      );
-                },
-              ),
-              const SizedBox(height: 12),
-
-              AppDropdownField<LookupItemSnapshot>(
-                label: 'Thick or Not',
-                value: drink.consistency,
-                items: state.consistencies,
-                itemLabel: (x) => x.name,
-                onChanged: (v) {
-                  if (v == null) return;
-                  context.read<OrderDraftBloc>().add(
-                        OrderDraftDrinkSelectionChanged(index: index, consistency: v),
-                      );
-                },
-              ),
-              const SizedBox(height: 12),
-
-              AppDropdownField<LookupItemSnapshot>(
-                label: 'Topping',
-                value: drink.topping,
-                items: state.toppings,
-                itemLabel: (x) => x.name,
-                onChanged: (v) {
-                  if (v == null) return;
-                  context.read<OrderDraftBloc>().add(
-                        OrderDraftDrinkSelectionChanged(index: index, topping: v),
-                      );
-                },
-              ),
-
-              const SizedBox(height: 16),
-              Row(
+              Stack(
                 children: [
-                  Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
-                  const Spacer(),
-                  Text(perDrink == null ? '—' : formatZar(perDrink),
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppDropdownField<LookupItemSnapshot>(
+                        label: 'Flavour',
+                        value: drink.flavour,
+                        items: state.flavours,
+                        itemLabel: (x) => x.name,
+                        enabled: !_locked,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          context.read<OrderDraftBloc>().add(
+                                OrderDraftDrinkSelectionChanged(index: index, flavour: v),
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      AppDropdownField<LookupItemSnapshot>(
+                        label: 'Thick or Not',
+                        value: drink.consistency,
+                        items: state.consistencies,
+                        itemLabel: (x) => x.name,
+                        enabled: !_locked,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          context.read<OrderDraftBloc>().add(
+                                OrderDraftDrinkSelectionChanged(index: index, consistency: v),
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      AppDropdownField<LookupItemSnapshot>(
+                        label: 'Topping',
+                        value: drink.topping,
+                        items: state.toppings,
+                        itemLabel: (x) => x.name,
+                        enabled: !_locked,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          context.read<OrderDraftBloc>().add(
+                                OrderDraftDrinkSelectionChanged(index: index, topping: v),
+                              );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
+                          const Spacer(),
+                          Text(
+                            perDrink == null ? '—' : formatZar(perDrink),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (_locked)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: ClipRRect(
+                          borderRadius: borderRadius,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface.withOpacity(0.55),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
+
               const SizedBox(height: 12),
               OutlinedButton(
-                onPressed: () => FocusScope.of(context).unfocus(),
-                child: const Text('Done'),
+                onPressed: () {
+                  FocusScope.of(context).unfocus();
+                  setState(() => _locked = !_locked);
+                },
+                child: Text(_locked ? 'Edit' : 'Done'),
               ),
             ],
           ),

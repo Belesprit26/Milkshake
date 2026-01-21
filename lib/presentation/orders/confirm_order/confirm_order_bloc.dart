@@ -48,7 +48,6 @@ class ConfirmOrderBloc extends Bloc<ConfirmOrderEvent, ConfirmOrderState> {
       case Err(failure: final f):
         emit(state.copyWith(status: ConfirmOrderStatus.failure, error: f.message));
       case Ok():
-        // Reload the order to reflect status change.
         add(ConfirmOrderStarted(order.id!));
     }
   }

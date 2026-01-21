@@ -7,10 +7,6 @@ import '../entities/order_totals.dart';
 class CalculateOrderTotals {
   const CalculateOrderTotals();
 
-  /// Calculates totals for a set of drinks using a config snapshot.
-  ///
-  /// Discount is applied to subtotal first; VAT is calculated on the discounted
-  /// amount (taxableAmount). This can be adjusted later if requirements differ.
   OrderTotals call({
     required List<DrinkItem> drinks,
     required ConfigSnapshot config,
@@ -50,7 +46,6 @@ class CalculateOrderTotals {
     return sum;
   }
 
-  /// Returns (amount * percent) rounded to nearest cent, half-up.
   Money _percentOf(Money amount, int percent) {
     if (percent <= 0 || amount.isZero) return Money.zero;
     final p = percent.clamp(0, 100);

@@ -76,11 +76,6 @@ class FirebaseAuthRepository implements AuthRepository {
     return AuthUser(uid: u.uid, email: email);
   }
 
-  /// Normalizes email for Firebase auth calls.
-  ///
-  /// - trims
-  /// - removes *all* whitespace (including invisible/newline chars)
-  /// - lowercases
   String _normalizeEmail(String email) {
     return email.replaceAll(RegExp(r'\s+'), '').trim().toLowerCase();
   }

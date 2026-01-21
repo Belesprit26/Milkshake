@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Reusable list/tile card used for Drafts and Orders lists.
-///
-/// Keeps list items visually aligned with the rest of the app (rounded corners,
-/// subtle border, consistent padding, and proper tap affordance).
 class AppTileCard extends StatelessWidget {
   const AppTileCard({
     super.key,

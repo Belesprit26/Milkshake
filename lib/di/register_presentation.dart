@@ -8,9 +8,6 @@ import '../presentation/orders/order_draft/order_draft_bloc.dart';
 import '../presentation/orders/order_history/order_history_bloc.dart';
 
 void registerPresentation(GetIt getIt) {
-  // Register Blocs/controllers here.
-  // Example (later):
-  // getIt.registerFactory(() => OrderDraftBloc(...));
   getIt.registerFactory<AuthGateCubit>(() => AuthGateCubit());
   getIt.registerFactory<LoginBloc>(() => LoginBloc());
   getIt.registerFactory<SignUpBloc>(() => SignUpBloc());

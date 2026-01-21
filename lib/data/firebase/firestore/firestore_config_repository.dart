@@ -10,19 +10,6 @@ import '../../../domain/catalog/repositories/config_repository.dart';
 import '../../../domain/catalog/value_objects/drink_count.dart';
 import '../../../domain/catalog/value_objects/vat_percent.dart';
 
-/// Firestore-backed config repository.
-///
-/// Suggested document:
-/// - Collection: `config`
-/// - Document: `current`
-/// - Fields:
-///   - vatPercent (number)
-///   - maxDrinks (number)
-///   - baseDrinkPriceCents (number)
-///   - version (string)
-///   - discount:
-///       - maxDiscountCents (number)
-///       - tiers (array of maps: { minPaidOrders, minDrinksPerOrder, percentOff })
 class FirestoreConfigRepository implements ConfigRepository {
   FirestoreConfigRepository({required FirebaseFirestore firestore})
       : _firestore = firestore;

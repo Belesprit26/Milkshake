@@ -17,8 +17,6 @@ import '../domain/payments/repositories/payment_repository.dart';
 import '../domain/users/repositories/user_profile_repository.dart';
 
 Future<void> registerData(GetIt getIt) async {
-  // Register data-layer implementations here (Firebase/Stripe, etc).
-  // Keep Firebase types out of `lib/domain/`.
   getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   getIt.registerLazySingleton<FirebaseFunctions>(() => FirebaseFunctions.instance);
