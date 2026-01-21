@@ -243,98 +243,97 @@ class _MilkshakeCardState extends State<_MilkshakeCard> {
             borderRadius: borderRadius,
             border: Border.all(color: const Color(0xFFE4E7EC)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
             children: [
-              Text('Milkshake ${index + 1}', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-
-              Stack(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  Text('Milkshake ${index + 1}', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 12),
+
+                  AppDropdownField<LookupItemSnapshot>(
+                    label: 'Flavour',
+                    value: drink.flavour,
+                    items: state.flavours,
+                    itemLabel: (x) => x.name,
+                    enabled: !_locked,
+                    onChanged: (v) {
+                      if (v == null) return;
+                      context.read<OrderDraftBloc>().add(
+                            OrderDraftDrinkSelectionChanged(index: index, flavour: v),
+                          );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  AppDropdownField<LookupItemSnapshot>(
+                    label: 'Thick or Not',
+                    value: drink.consistency,
+                    items: state.consistencies,
+                    itemLabel: (x) => x.name,
+                    enabled: !_locked,
+                    onChanged: (v) {
+                      if (v == null) return;
+                      context.read<OrderDraftBloc>().add(
+                            OrderDraftDrinkSelectionChanged(index: index, consistency: v),
+                          );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  AppDropdownField<LookupItemSnapshot>(
+                    label: 'Topping',
+                    value: drink.topping,
+                    items: state.toppings,
+                    itemLabel: (x) => x.name,
+                    enabled: !_locked,
+                    onChanged: (v) {
+                      if (v == null) return;
+                      context.read<OrderDraftBloc>().add(
+                            OrderDraftDrinkSelectionChanged(index: index, topping: v),
+                          );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      AppDropdownField<LookupItemSnapshot>(
-                        label: 'Flavour',
-                        value: drink.flavour,
-                        items: state.flavours,
-                        itemLabel: (x) => x.name,
-                        enabled: !_locked,
-                        onChanged: (v) {
-                          if (v == null) return;
-                          context.read<OrderDraftBloc>().add(
-                                OrderDraftDrinkSelectionChanged(index: index, flavour: v),
-                              );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      AppDropdownField<LookupItemSnapshot>(
-                        label: 'Thick or Not',
-                        value: drink.consistency,
-                        items: state.consistencies,
-                        itemLabel: (x) => x.name,
-                        enabled: !_locked,
-                        onChanged: (v) {
-                          if (v == null) return;
-                          context.read<OrderDraftBloc>().add(
-                                OrderDraftDrinkSelectionChanged(index: index, consistency: v),
-                              );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      AppDropdownField<LookupItemSnapshot>(
-                        label: 'Topping',
-                        value: drink.topping,
-                        items: state.toppings,
-                        itemLabel: (x) => x.name,
-                        enabled: !_locked,
-                        onChanged: (v) {
-                          if (v == null) return;
-                          context.read<OrderDraftBloc>().add(
-                                OrderDraftDrinkSelectionChanged(index: index, topping: v),
-                              );
-                        },
+                      Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
+                      const Spacer(),
+                      Text(
+                        perDrink == null ? '—' : formatZar(perDrink),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
-                  if (_locked)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: ClipRRect(
-                          borderRadius: borderRadius,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface.withOpacity(0.55),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
 
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
-                  const Spacer(),
-                  Text(
-                    perDrink == null ? '—' : formatZar(perDrink),
-                    style: Theme.of(context).textTheme.titleMedium,
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      setState(() => _locked = !_locked);
+                    },
+                    child: Text(_locked ? 'Edit' : 'Done'),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  setState(() => _locked = !_locked);
-                },
-                child: Text(_locked ? 'Edit' : 'Done'),
-              ),
+              if (_locked)
+                Positioned.fill(
+                  left: -16,
+                  right: -16,
+                  top: 24,
+                  bottom: 80,
+                  child: IgnorePointer(
+                    child: ClipRRect(
+                      borderRadius: borderRadius,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface.withOpacity(0.55),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         );
