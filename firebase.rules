@@ -18,7 +18,6 @@ service cloud.firestore {
       allow create, update, delete: if isManager();
     }
 
-    // Config is manager-controlled; orders store snapshots
     match /config/{docId} {
       allow read: if true;
       allow create, update, delete: if isManager();
@@ -30,20 +29,17 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      // Minimal baseline: owner can read/write their order; managers can read all.
       allow read: if isManager() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if isManager() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
-    // Append-only audit events. Patrons only see their own order-related events later
     match /audit_events/{eventId} {
       allow read: if isManager();
       allow create: if signedIn();
       allow update, delete: if false;
     }
 
-    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }

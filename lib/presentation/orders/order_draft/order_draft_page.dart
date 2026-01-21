@@ -297,18 +297,6 @@ class _MilkshakeCardState extends State<_MilkshakeCard> {
                               );
                         },
                       ),
-
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
-                          const Spacer(),
-                          Text(
-                            perDrink == null ? '—' : formatZar(perDrink),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                   if (_locked)
@@ -324,6 +312,18 @@ class _MilkshakeCardState extends State<_MilkshakeCard> {
                         ),
                       ),
                     ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text('Cost:', style: Theme.of(context).textTheme.titleMedium),
+                  const Spacer(),
+                  Text(
+                    perDrink == null ? '—' : formatZar(perDrink),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ],
               ),
 

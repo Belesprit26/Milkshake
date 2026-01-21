@@ -13,24 +13,9 @@ export const health = onRequest((_req: any, res: any) => {
 const seedToken = defineSecret("SEED_TOKEN");
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
-// Optional override. On web we can usually infer this from the request Origin header.
 const webBaseUrl = defineString("WEB_BASE_URL");
 
-/**
- * Idempotent Firestore seeder.
- *
- * - Seeds `config/current`
- * - Seeds `lookups` documents (flavour/topping/consistency/store)
- *
- * Security:
- * - Requires a token: `?token=...` that matches the Functions secret SEED_TOKEN.
- *
- * Usage (after deploying & setting secret):
- *   curl "https://<region>-<project>.cloudfunctions.net/seedFirestore?token=YOUR_TOKEN"
- */
 export const seedFirestore = onRequest(
-  // `invoker: "public"` ensures this endpoint can be called without Google IAM auth.
-  // (You still need the SEED_TOKEN query param.)
   { secrets: [seedToken], invoker: "public" as any },
   async (req: any, res: any) => {
   try {
@@ -44,7 +29,6 @@ export const seedFirestore = onRequest(
 
     const db = getFirestore();
 
-    // 1) Config
     const configRef = db.collection("config").doc("current");
     await configRef.set(
       {
@@ -65,10 +49,7 @@ export const seedFirestore = onRequest(
       { merge: true },
     );
 
-    // 2) Lookups
-    // We use deterministic doc IDs so re-running this updates in-place.
     const lookups = [
-      // Flavours
       { id: "flavour_vanilla", type: "flavour", name: "Vanilla", priceDeltaCents: 100, active: true },
       { id: "flavour_strawberry", type: "flavour", name: "Strawberry", priceDeltaCents: 100, active: true },
       { id: "flavour_chocolate", type: "flavour", name: "Chocolate", priceDeltaCents: 150, active: true },
@@ -77,7 +58,6 @@ export const seedFirestore = onRequest(
       { id: "flavour_oreo", type: "flavour", name: "Oreo", priceDeltaCents: 200, active: true },
       { id: "flavour_bar_one", type: "flavour", name: "Bar one", priceDeltaCents: 250, active: true },
 
-      // Toppings
       {
         id: "topping_frozen_strawberries",
         type: "topping",
@@ -109,7 +89,6 @@ export const seedFirestore = onRequest(
         active: true,
       },
 
-      // Consistency
       {
         id: "consistency_double_thick",
         type: "consistency",
@@ -121,7 +100,6 @@ export const seedFirestore = onRequest(
       { id: "consistency_milky", type: "consistency", name: "Milky", priceDeltaCents: 0, active: true },
       { id: "consistency_icy", type: "consistency", name: "Icy", priceDeltaCents: -100, active: true },
 
-      // Stores
       { id: "store_southdowns", type: "store", name: "Southdowns (Irene)", priceDeltaCents: 0, active: true },
       { id: "store_menlyn", type: "store", name: "Menlyn Maine", priceDeltaCents: 0, active: true },
     ] as const;
@@ -156,18 +134,6 @@ export const seedFirestore = onRequest(
 },
 );
 
-/**
- * Creates a Stripe Checkout Session for a confirmed order.
- *
- * Client flow:
- * - User confirms order -> status becomes `pending_payment`
- * - Client calls this callable function to get checkoutUrl
- * - Redirect user to Stripe Checkout
- *
- * This function is the source of truth for:
- * - the payable amount (taken from order.totals.totalCents snapshot)
- * - access control (order must belong to caller)
- */
 export const createCheckoutSession = onCall(
   { secrets: [stripeSecretKey] },
   async (request: any) => {
@@ -274,12 +240,6 @@ function _inferWebBaseUrl(request: any): string | null {
   return null;
 }
 
-/**
- * Stripe webhook to finalize payment.
- *
- * - Validates signature
- * - On `checkout.session.completed`, marks the order `paid`
- */
 export const stripeWebhook = onRequest(
   { secrets: [stripeSecretKey, stripeWebhookSecret], invoker: "public" as any },
   async (req: any, res: any) => {
