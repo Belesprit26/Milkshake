@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Reusable dropdown field used across the app.
-///
-/// Mirrors `AppTextField`:
-/// - label rendered above
-/// - field styling driven by `InputDecorationTheme`
 class AppDropdownField<T> extends StatelessWidget {
   const AppDropdownField({
     super.key,
@@ -40,7 +35,7 @@ class AppDropdownField<T> extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<T>(
-          value: value,
+          value: value,style: theme.textTheme.bodyMedium,
           isExpanded: true,
           items: items
               .map(

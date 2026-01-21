@@ -28,11 +28,8 @@ class AppFormContainer extends StatelessWidget {
   final List<Widget>? actions;
   final EdgeInsets padding;
 
-  /// Useful for web/desktop: keeps forms from stretching too wide.
   final double maxWidth;
 
-  /// Set true when [child] is a scrollable (e.g. ListView) so it can receive
-  /// a bounded height and participate in layout correctly.
   final bool expandChild;
 
   @override

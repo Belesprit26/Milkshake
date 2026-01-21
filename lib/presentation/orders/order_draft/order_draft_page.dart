@@ -9,17 +9,21 @@ import '../../../domain/auth/usecases/sign_out.dart';
 import '../../shared/widgets/app_dropdown_field.dart';
 import '../../shared/widgets/app_text_field.dart';
 import '../../shared/formatters/zar_format.dart';
+import '../drafts/drafts_page.dart';
 import '../order_history/order_history_page.dart';
 import '../confirm_order/confirm_order_page.dart';
 import 'order_draft_bloc.dart';
 
 class OrderDraftPage extends StatelessWidget {
-  const OrderDraftPage({super.key});
+  const OrderDraftPage({super.key, this.orderId});
+
+  /// When provided, the page loads an existing draft for editing.
+  final String? orderId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<OrderDraftBloc>()..add(const OrderDraftStarted()),
+      create: (_) => getIt<OrderDraftBloc>()..add(OrderDraftStarted(orderId: orderId)),
       child: const _OrderDraftView(),
     );
   }
@@ -35,7 +39,16 @@ class _OrderDraftView extends StatelessWidget {
         title: const Text('Order Placement'),
         actions: [
           IconButton(
-            tooltip: 'Order history',
+            tooltip: 'Drafts',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DraftsPage()),
+              );
+            },
+            icon: const Icon(Icons.edit_note),
+          ),
+          IconButton(
+            tooltip: 'Orders',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const OrderHistoryPage()),

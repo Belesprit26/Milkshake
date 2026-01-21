@@ -78,6 +78,69 @@ class OrderDraftBloc extends Bloc<OrderDraftEvent, OrderDraftState> {
     final consistencies = (consistencyRes as Ok<List<LookupItemSnapshot>>).value;
     final stores = (storeRes as Ok<List<LookupItemSnapshot>>).value;
 
+    // If editing an existing draft, load it and prefill state.
+    if (event.orderId != null && event.orderId!.trim().isNotEmpty) {
+      final user = _authRepository.currentUser();
+      if (user == null) {
+        emit(state.copyWith(status: OrderDraftStatus.failure, message: 'Not signed in.'));
+        return;
+      }
+
+      final orderRes = await _orderRepository.getById(event.orderId!);
+      if (orderRes is Err) {
+        emit(state.copyWith(status: OrderDraftStatus.failure, message: (orderRes as Err).failure.message));
+        return;
+      }
+      final order = (orderRes as Ok<OrderDraft>).value;
+      if (order.uid != user.uid) {
+        emit(state.copyWith(status: OrderDraftStatus.failure, message: 'Order does not belong to you.'));
+        return;
+      }
+
+      // Ensure the currently active lookup lists include any selected snapshot values
+      // so dropdowns can render even if items were deactivated later.
+      List<LookupItemSnapshot> ensureIncluded(
+        List<LookupItemSnapshot> list,
+        LookupItemSnapshot selected,
+      ) {
+        return list.any((x) => x.id == selected.id) ? list : [selected, ...list];
+      }
+
+      final mergedFlavours = order.items.fold<List<LookupItemSnapshot>>(
+        flavours,
+        (acc, d) => ensureIncluded(acc, d.flavour),
+      );
+      final mergedToppings = order.items.fold<List<LookupItemSnapshot>>(
+        toppings,
+        (acc, d) => ensureIncluded(acc, d.topping),
+      );
+      final mergedConsistencies = order.items.fold<List<LookupItemSnapshot>>(
+        consistencies,
+        (acc, d) => ensureIncluded(acc, d.consistency),
+      );
+      final mergedStores = ensureIncluded(stores, order.pickupStore);
+
+      emit(
+        state.copyWith(
+          status: OrderDraftStatus.ready,
+          // For existing drafts, prefer the stored pricing snapshot to avoid drifting totals.
+          config: order.configSnapshot,
+          flavours: mergedFlavours,
+          toppings: mergedToppings,
+          consistencies: mergedConsistencies,
+          stores: mergedStores,
+          drinkCount: order.items.length,
+          drinks: order.items,
+          totals: order.totals,
+          pickupStore: order.pickupStore,
+          pickupTime: order.pickupTime,
+          orderId: order.id,
+          message: null,
+        ),
+      );
+      return;
+    }
+
     emit(
       state.copyWith(
         status: OrderDraftStatus.ready,

@@ -1,6 +1,3 @@
-// These shims exist to keep the editor/tsserver happy in environments where
-// module resolution doesn't pick up `functions/node_modules` correctly.
-
 declare module "firebase-functions/v2/https" {
   export const onRequest: any;
   export const onCall: any;

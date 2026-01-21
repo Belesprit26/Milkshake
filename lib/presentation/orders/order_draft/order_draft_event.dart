@@ -8,7 +8,11 @@ sealed class OrderDraftEvent extends Equatable {
 }
 
 final class OrderDraftStarted extends OrderDraftEvent {
-  const OrderDraftStarted();
+  const OrderDraftStarted({this.orderId});
+  final String? orderId;
+
+  @override
+  List<Object?> get props => [orderId];
 }
 
 final class OrderDraftDrinkCountChanged extends OrderDraftEvent {

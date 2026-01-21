@@ -31,7 +31,6 @@ service cloud.firestore {
 
     match /orders/{orderId} {
       // Minimal baseline: owner can read/write their order; managers can read all.
-      // Tighten write rules later (draft-only edits, immutable totals after payment)
       allow read: if isManager() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if isManager() || (signedIn() && resource.data.uid == request.auth.uid);
