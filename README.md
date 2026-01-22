@@ -28,7 +28,9 @@ To run the app locally:
 For reviewers/testers:
 
 - **Manager account (email)**: `butizwide@gmail.com`
+                               `buti12345`
 - **Patron account (email)**: `charlie@gmail.com`
+                              `charlie12345`
 
 ### Patron flow
 
